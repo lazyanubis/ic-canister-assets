@@ -1,6 +1,7 @@
 #!!/bin/bash
 
 cargo clippy
+cargo test
 
 # 部署代码
 # dfx deploy --network ic ic-canister-assets --mode=reinstall --yes
