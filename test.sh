@@ -67,7 +67,7 @@ if [ -z "$ic_canister_assets" ]; then
     exit 1
 fi
 
-blue "1.1 permission permission_query"
+blue "\n🚩 1.1 permission permission_query"
 test "version" "$(dfx --identity alice canister call ic-canister-assets version 2>&1)" '(1 : nat32)'
 test "permission_all" "$(dfx --identity alice canister call ic-canister-assets permission_all 2>&1)" 'vec { variant { Forbidden = "PauseQuery" }; variant { Permitted = "PauseReplace" }'
 test "permission_query" "$(dfx --identity alice canister call ic-canister-assets permission_query 2>&1)" '(vec { "PauseQuery"; "PermissionQuery"; "BusinessQuery" })'
@@ -81,7 +81,7 @@ test "permission_update" "$(dfx --identity alice canister call ic-canister-asset
 test "permission_query" "$(dfx --identity alice canister call ic-canister-assets permission_query 2>&1)" '(vec { "PauseQuery"; "PermissionQuery"; "BusinessQuery" })'
 test "permission_query" "$(dfx canister call ic-canister-assets permission_query 2>&1)" 'vec { "PauseQuery"; "PauseReplace"; "PermissionQuery"; "PermissionFind"; "PermissionUpdate"; "RecordFind"; "RecordMigrate"; "ScheduleFind"; "ScheduleReplace"; "ScheduleTrigger"; "BusinessQuery"; "BusinessUpload"; "BusinessDelete";}'
 
-blue "1.2 permission permission update"
+blue "\n🚩 1.2 permission permission update"
 test "permission_query" "$(dfx canister call ic-canister-assets permission_query 2>&1)" 'vec { "PauseQuery"; "PauseReplace"; "PermissionQuery"; "PermissionFind"; "PermissionUpdate"; "RecordFind"; "RecordMigrate"; "ScheduleFind"; "ScheduleReplace"; "ScheduleTrigger"; "BusinessQuery"; "BusinessUpload"; "BusinessDelete";}'
 test "permission_query" "$(dfx --identity alice canister call ic-canister-assets permission_query 2>&1)" 'vec { "PauseQuery"; "PermissionQuery"; "BusinessQuery" }'
 test "permission_find_by_user" "$(dfx canister call ic-canister-assets permission_find_by_user "(principal \"$DEFAULT\")" 2>&1)" 'vec { "PauseQuery"; "PauseReplace"; "PermissionQuery"; "PermissionFind"; "PermissionUpdate"; "RecordFind"; "RecordMigrate"; "ScheduleFind"; "ScheduleReplace"; "ScheduleTrigger"; "BusinessQuery"; "BusinessUpload"; "BusinessDelete";}'
@@ -89,7 +89,7 @@ test "permission_find_by_user" "$(dfx canister call ic-canister-assets permissio
 test "permission_find_by_user" "$(dfx --identity alice canister call ic-canister-assets permission_find_by_user "(principal \"$DEFAULT\")" 2>&1)" "'PermissionFind' is required"
 test "permission_find_by_user" "$(dfx --identity alice canister call ic-canister-assets permission_find_by_user "(principal \"$ALICE\")" 2>&1)" "'PermissionFind' is required"
 
-blue "1.3 permission roles"
+blue "\n🚩 1.3 permission roles"
 test "permission_query" "$(dfx --identity alice canister call ic-canister-assets permission_query 2>&1)" 'vec { "PauseQuery"; "PermissionQuery"; "BusinessQuery" }'
 test "permission_update" "$(dfx canister call ic-canister-assets permission_update "(vec { variant { UpdateRolePermission=record{\"Admin\"; opt vec {\"PauseReplace\"; \"PauseQuery\"} } } })" 2>&1)" "()"
 test "permission_update" "$(dfx canister call ic-canister-assets permission_update "(vec { variant { UpdateUserRole=record{principal \"$ALICE\"; opt vec {\"Admin\"} } } })" 2>&1)" "()"
@@ -97,18 +97,18 @@ test "permission_query" "$(dfx --identity alice canister call ic-canister-assets
 test "permission_update" "$(dfx canister call ic-canister-assets permission_update "(vec { variant { UpdateUserRole=record{principal \"$ALICE\"; null } } })" 2>&1)" "()"
 test "permission_query" "$(dfx --identity alice canister call ic-canister-assets permission_query 2>&1)" 'vec { "PauseQuery"; "PermissionQuery"; "BusinessQuery" }'
 
-blue "2.1 pause permission"
+blue "\n🚩 2.1 pause permission"
 test "pause_query" "$(dfx canister call ic-canister-assets pause_query 2>&1)" "(false)"
 test "pause_query_reason" "$(dfx canister call ic-canister-assets pause_query_reason 2>&1)" "(null)"
 test "pause_replace" "$(dfx canister call ic-canister-assets pause_replace "(opt \"reason\")" 2>&1)" "()"
 test "pause_query" "$(dfx canister call ic-canister-assets pause_query 2>&1)" "(true)"
 test "pause_query_reason" "$(dfx canister call ic-canister-assets pause_query_reason 2>&1)" "message = \"reason\""
 
-blue "2.2 pause permission by alice"
+blue "\n🚩 2.2 pause permission by alice"
 test "pause_query" "$(dfx --identity alice canister call ic-canister-assets pause_query 2>&1)" "(true)"
 test "pause_query_reason" "$(dfx --identity alice canister call ic-canister-assets pause_query_reason 2>&1)" "message = \"reason\""
 
-blue "2.3 pause no permission"
+blue "\n🚩 2.3 pause no permission"
 test "pause_replace" "$(dfx --identity alice canister call ic-canister-assets pause_replace "(null)" 2>&1)" "'PauseReplace' is required"
 test "permission_update" "$(dfx canister call ic-canister-assets permission_update "(vec { variant { UpdateUserPermission=record{principal \"$ALICE\"; opt vec { \"PauseReplace\";\"PauseQuery\" } } } })" 2>&1)" "()"
 test "pause_replace" "$(dfx --identity alice canister call ic-canister-assets pause_replace "(null)" 2>&1)" "()"
@@ -117,13 +117,13 @@ test "pause_query_reason" "$(dfx --identity alice canister call ic-canister-asse
 test "pause_query" "$(dfx canister call ic-canister-assets pause_query 2>&1)" "(false)"
 test "pause_query_reason" "$(dfx canister call ic-canister-assets pause_query_reason 2>&1)" "(null)"
 
-blue "3 record no permission"
+blue "\n🚩 3 record no permission"
 test "record_topics" "$(dfx --identity alice canister call ic-canister-assets record_topics 2>&1)" "'RecordFind' is required"
 test "record_topics" "$(dfx canister call ic-canister-assets record_topics 2>&1)" '"UploadFile"' '"CyclesCharge"'
 test "record_find_by_page" "$(dfx canister call ic-canister-assets record_find_by_page "(record{page=1:nat64;size=1:nat32},opt record{topic=opt vec{\"Pause\"}})" 2>&1)" "record { total = "
 test "record_migrate" "$(dfx canister call ic-canister-assets record_migrate "(1:nat32)" 2>&1)" "removed = 0"
 
-blue "4 schedule"
+blue "\n🚩 4 schedule"
 test "schedule_find" "$(dfx --identity alice canister call ic-canister-assets schedule_find 2>&1)" "'ScheduleFind' is required"
 test "schedule_find" "$(dfx canister call ic-canister-assets schedule_find 2>&1)" "(null)"
 test "schedule_replace" "$(dfx --identity alice canister call ic-canister-assets schedule_replace "(opt (1000000000:nat64))" 2>&1)" "'ScheduleReplace' is required"
@@ -134,7 +134,7 @@ sleep 2
 test "schedule_trigger" "$(dfx --identity alice canister call ic-canister-assets schedule_trigger 2>&1)" "'ScheduleTrigger' is required"
 test "schedule_trigger" "$(dfx canister call ic-canister-assets schedule_trigger 2>&1)" "()"
 
-# blue "5 example business"
+# blue "\n🚩 5 example business"
 # test "business_example_query" "$(dfx --identity alice canister call ic-canister-assets business_example_query 2>&1)" "\"\""
 # test "business_example_query" "$(dfx canister call ic-canister-assets business_example_query 2>&1)" "\"\""
 # test "business_example_set" "$(dfx --identity alice canister call ic-canister-assets business_example_set "(\"test string\")" 2>&1)" "'BusinessExampleSet' is required"
@@ -142,7 +142,7 @@ test "schedule_trigger" "$(dfx canister call ic-canister-assets schedule_trigger
 # test "business_example_query" "$(dfx --identity alice canister call ic-canister-assets business_example_query 2>&1)" "test string"
 # test "business_example_query" "$(dfx canister call ic-canister-assets business_example_query 2>&1)" "test string"
 
-# blue "6 test stable data"
+# blue "\n🚩 6 test stable data"
 # test "pause_replace" "$(dfx canister call ic-canister-assets pause_replace "(opt \"reason\")" 2>&1)" "()"
 # test "pause_query" "$(dfx canister call ic-canister-assets pause_query 2>&1)" "(true)"
 # dfx canister install --mode=upgrade --upgrade-unchanged --argument "(null)" ic-canister-assets

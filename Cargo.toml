@@ -1,7 +1,7 @@
 [package]
 name = "ic-canister-assets" # 项目名
 version = "0.1.0"           # 版本
-edition = "2021"            # 版本
+edition = "2024"            # 版本
 
 [lib]
 path = "src/lib.rs"     # 入口文件
@@ -48,8 +48,8 @@ ic-canister-kit = { version = "1.0.27", features = [
     "schedule",
 ] }
 
-strum = "0.26.3"
-strum_macros = "0.26.4"
+strum = "0.27.1"
+strum_macros = "0.27.1"
 
 sha2 = "0.10"            # hash
 hex = "0.4"

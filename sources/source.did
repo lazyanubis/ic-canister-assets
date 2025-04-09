@@ -111,7 +111,7 @@ type UploadingArg = record {
   index : nat32;
   chunk_size : nat32;
 };
-service : (opt CanisterInitialArg) -> {
+service : (opt InitArgs) -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   business_delete : (vec text) -> ();
   business_download : (text) -> (blob) query;
