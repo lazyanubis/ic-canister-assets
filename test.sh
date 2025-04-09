@@ -57,7 +57,7 @@ cargo clippy
 
 # ! 1. 测试 ic-canister-assets
 red "\n=========== 1. ic-canister-assets ===========\n"
-dfx canister create ic-canister-assets # --with-cycles 50T
+dfx canister create ic-canister-assets --specified-id "bkyz2-fmaaa-aaaaa-qaaaq-cai" # --with-cycles 50T
 dfx deploy --mode=reinstall --yes --argument "(null)" ic-canister-assets
 ic_canister_assets=$(canister_id "ic-canister-assets")
 blue "ic-canister-assets Canister: $ic_canister_assets"
