@@ -296,19 +296,17 @@ impl InnerState {
             .collect()
     }
     pub fn download(&self, path: String) -> Vec<u8> {
-        #[allow(clippy::expect_used)] // ? SAFETY
-        let file = self.files.get(&path).expect("File not found");
-        #[allow(clippy::expect_used)] // ? SAFETY
-        let asset = self.assets.get(&file.hash).expect("File not found");
+        use ic_canister_kit::common::trap;
+        let file = trap(self.files.get(&path).ok_or("File not found"));
+        let asset = trap(self.assets.get(&file.hash).ok_or("File not found"));
         asset
             .slice(&file.hash, file.size, 0, file.size as usize)
             .to_vec()
     }
     pub fn download_by(&self, path: String, offset: u64, size: u64) -> Vec<u8> {
-        #[allow(clippy::expect_used)] // ? SAFETY
-        let file = self.files.get(&path).expect("File not found");
-        #[allow(clippy::expect_used)] // ? SAFETY
-        let asset = self.assets.get(&file.hash).expect("File not found");
+        use ic_canister_kit::common::trap;
+        let file = trap(self.files.get(&path).ok_or("File not found"));
+        let asset = trap(self.assets.get(&file.hash).ok_or("File not found"));
         asset
             .slice(&file.hash, file.size, offset as usize, size as usize)
             .to_vec()
