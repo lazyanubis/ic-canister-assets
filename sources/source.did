@@ -132,7 +132,7 @@ service : (opt InitArgs) -> {
   business_hashed_find : () -> (bool) query;
   business_hashed_update : (bool) -> ();
   business_upload : (vec UploadingArg) -> ();
-  canister_status : () -> (CanisterStatusResponse);
+  canister_status : () -> (CanisterStatusResult);
   http_request : (CustomHttpRequest) -> (CustomHttpResponse) query;
   http_streaming : (StreamingCallbackToken) -> (
       StreamingCallbackHttpResponse,

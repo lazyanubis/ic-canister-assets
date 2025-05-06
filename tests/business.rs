@@ -37,19 +37,14 @@ fn test_business_apis() {
     #[allow(unused)] let carol = pocketed_template.sender(carol_identity);
     #[allow(unused)] let anonymous = pocketed_template.sender(anonymous_identity);
 
-    // // 🚩 5 example business
-    // assert_eq!(alice.business_example_query().unwrap(), "".to_string());
-    // assert_eq!(default.business_example_query().unwrap(), "".to_string());
-    // assert_eq!(alice.business_example_set("test string".to_string()).unwrap_err().reject_message, "Permission 'BusinessExampleSet' is required".to_string());
-    // assert_eq!(default.business_example_set("test string".to_string()).unwrap(), ());
-    // assert_eq!(alice.business_example_query().unwrap(), "test string".to_string());
-    // assert_eq!(default.business_example_query().unwrap(), "test string".to_string());
+    // 🚩 1 business query
+    assert_eq!(alice.business_files().unwrap(), vec![]);
+    assert_eq!(alice.business_download("/123.txt".to_string()).unwrap_err().reject_message.contains("File not found"), true);
+    assert_eq!(alice.business_download("/456.txt".to_string()).unwrap_err().reject_message.contains("File not found"), true);
 
-    // // 🚩 6 test stable data
-    // assert_eq!(default.pause_replace(Some("reason".to_string())).unwrap(), ());
-    // assert_eq!(default.pause_query().unwrap(), true);
-    // pic.upgrade_canister(canister_id, WASM_MODULE.to_vec(), encode_one(None::<()>).unwrap(), Some(default_identity)).unwrap();
-    // assert_eq!(default.pause_replace(None).unwrap(), ());
-    // assert_eq!(default.pause_query().unwrap(), false);
-    // assert_eq!(default.business_example_query().unwrap(), "test string".to_string());
+    // 🚩 2 business upload
+    assert_eq!(alice.business_upload(vec![UploadingArg { hash: vec![0; 32].into(), chunk: vec![1, 2, 3].into(), path: "/123.txt".to_string(), size: 3, headers: vec![], index: 0, chunk_size: 3 }]).unwrap_err().reject_message, "Permission 'BusinessUpload' is required".to_string());
+    assert_eq!(default.business_upload(vec![UploadingArg { hash: vec![0; 32].into(), chunk: vec![1, 2, 3].into(), path: "/123.txt".to_string(), size: 3, headers: vec![], index: 0, chunk_size: 3 }]).unwrap(), ());
+    assert_eq!(alice.business_files().unwrap().pop().unwrap().hash, "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81".to_string());
+    assert_eq!(alice.business_download("/123.txt".to_string()).unwrap(), vec![1, 2, 3]);
 }
