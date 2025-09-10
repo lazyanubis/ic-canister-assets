@@ -48,10 +48,7 @@ pub trait Business:
     fn business_assets_get_file(&self, path: &str) -> Option<&crate::stable::AssetFile> {
         ic_cdk::trap("Not supported operation by this version.")
     }
-    fn business_assets_get(
-        &self,
-        hash: &crate::stable::HashDigest,
-    ) -> Option<&crate::stable::AssetData> {
+    fn business_assets_get(&self, hash: &crate::stable::HashDigest) -> Option<&crate::stable::AssetData> {
         ic_cdk::trap("Not supported operation by this version.")
     }
 }
