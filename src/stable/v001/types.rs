@@ -1,13 +1,8 @@
-use std::str::FromStr;
-
-use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::{EnumIter, EnumString};
-
 pub use ic_canister_kit::types::*;
+use serde::{Deserialize, Serialize};
 
 #[allow(unused)]
-pub use super::super::{Business, ParsePermission, ScheduleTask, MutableBusiness};
+pub use super::super::{Business, MutableBusiness, ParsePermission, ScheduleTask};
 
 #[allow(unused)]
 pub use super::super::business::*;
@@ -18,57 +13,22 @@ pub use super::permission::*;
 #[allow(unused)]
 pub use super::schedule::schedule_task;
 
-// 初始化参数
-#[derive(Debug, Clone, Serialize, Deserialize, candid::CandidType, Default)]
-pub struct InitArg {
-    pub supers: Option<Vec<UserId>>,     // init super administrators or deployer
-    pub schedule: Option<DurationNanos>, // init scheduled task or not
-}
+mod init;
+pub use init::*;
+mod upgrade;
+pub use upgrade::*;
+mod topic;
+pub use topic::*;
+mod canister_kit;
+pub use canister_kit::*;
 
-// 升级参数
-#[derive(Debug, Clone, Serialize, Deserialize, candid::CandidType)]
-pub struct UpgradeArg {
-    pub supers: Option<Vec<UserId>>,     // add new super administrators of not
-    pub schedule: Option<DurationNanos>, // init scheduled task or not
-}
-
-#[allow(unused)]
-#[derive(Debug, Clone, Copy, EnumIter, EnumString, strum_macros::Display)]
-pub enum RecordTopics {
-    // ! 新的权限类型从 0 开始
-    UploadFile = 0, // 上传文件
-    DeleteFile = 1, // 删除文件
-
-    // ! 系统倒序排列
-    CyclesCharge = 249, // 充值
-    Upgrade = 250,      // 升级
-    Schedule = 251,     // 定时任务
-    Record = 252,       // 记录
-    Permission = 253,   // 权限
-    Pause = 254,        // 维护
-    Initial = 255,      // 初始化
-}
-#[allow(unused)]
-impl RecordTopics {
-    pub fn topic(&self) -> RecordTopic {
-        *self as u8
-    }
-    pub fn topics() -> Vec<String> {
-        RecordTopics::iter().map(|x| x.to_string()).collect()
-    }
-    pub fn from(topic: &str) -> Result<Self, strum::ParseError> {
-        RecordTopics::from_str(topic)
-    }
-}
-
-// 框架需要的数据结构
-#[derive(Serialize, Deserialize, Default)]
-pub struct CanisterKit {
-    pub pause: Pause,             // 记录维护状态 // ? 堆内存 序列化
-    pub permissions: Permissions, // 记录自身权限 // ? 堆内存 序列化
-    pub records: Records,         // 记录操作记录 // ? 堆内存 序列化
-    pub schedule: Schedule,       // 记录定时任务 // ? 堆内存 序列化
-}
+// 业务类型
+mod common;
+pub use common::*;
+mod assets;
+pub use assets::*;
+mod upload;
+pub use upload::*;
 
 // 能序列化的和不能序列化的放在一起
 // 其中不能序列化的采用如下注解
@@ -107,107 +67,6 @@ impl Default for InnerState {
     }
 }
 
-use candid::CandidType;
-
-// ============================== 文件数据 ==============================
-
-#[derive(
-    CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord,
-)]
-pub struct HashDigest([u8; 32]);
-
-impl HashDigest {
-    pub fn hex(&self) -> String {
-        hex::encode(self.0)
-    }
-}
-
-mod assets {
-    use candid::CandidType;
-    use serde::{Deserialize, Serialize};
-
-    use super::HashDigest;
-
-    // 单个文件数据
-    #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-    pub struct AssetData {
-        data: Vec<u8>, // 实际数据
-    }
-
-    impl AssetData {
-        pub fn from(_hash: &HashDigest, data: Vec<u8>) -> Self {
-            Self { data }
-        }
-        pub fn slice(
-            &self,
-            _hash: &HashDigest,
-            data_size: u64,
-            offset: usize,
-            size: usize,
-        ) -> std::borrow::Cow<'_, [u8]> {
-            assert!(offset < data_size as usize);
-            let offset_end = offset + size;
-            assert!(offset_end <= data_size as usize);
-            std::borrow::Cow::Borrowed(&self.data[offset..offset_end])
-        }
-    }
-}
-
-pub use assets::AssetData;
-
-// 对外的路径数据 指向文件数据
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct AssetFile {
-    pub path: String,
-    pub created: TimestampNanos,
-    pub modified: TimestampNanos,
-    pub headers: Vec<(String, String)>,
-    pub hash: HashDigest,
-    pub size: u64,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
-pub struct HashedPath(HashSet<String>);
-
-// =========== 上传过程中的对象 ===========
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct UploadingFile {
-    pub path: String,
-    pub headers: Vec<(String, String)>,
-    pub hash: HashDigest, // hash 值，在 hashed 为 false 的情况下不使用
-    pub data: Vec<u8>,    // 上传中的数据
-
-    pub size: u64,          // 文件大小
-    pub chunk_size: u32,    // 块大小 块分割的大小
-    pub chunks: u32,        // 需要上传的次数
-    pub chunked: Vec<bool>, // 记录每一个块的上传状态
-}
-
-// 上传参数
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct UploadingArg {
-    pub path: String,
-    pub headers: Vec<(String, String)>, // 使用的 header
-    pub hash: HashDigest,               // hash 值，在 hashed 为 false 的情况下不使用
-    pub size: u64,                      // 文件大小
-    pub chunk_size: u32,                // 块大小 块分割的大小
-    pub index: u32,                     // 本次上传的数据
-    pub chunk: Vec<u8>,                 // 上传中的数据
-}
-
-// =========== 查询的对象 ===========
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct QueryFile {
-    pub path: String,
-    pub size: u64,
-    pub headers: Vec<(String, String)>,
-    pub created: TimestampNanos,
-    pub modified: TimestampNanos,
-    pub hash: String,
-}
-
 impl InnerState {
     pub fn do_init(&mut self, _arg: InitArg) {
         // maybe do something
@@ -224,13 +83,7 @@ impl InnerState {
         let digest: [u8; 32] = hasher.finalize().into();
         HashDigest(digest)
     }
-    fn put_file(
-        &mut self,
-        path: String,
-        headers: Vec<(String, String)>,
-        hash: HashDigest,
-        size: u64,
-    ) {
+    fn put_file(&mut self, path: String, headers: Vec<(String, String)>, hash: HashDigest, size: u64) {
         // 3. 插入 files: path -> hash
         let now = ic_canister_kit::times::now();
         if let Some(exist) = self.files.get_mut(&path) {
@@ -307,9 +160,7 @@ impl InnerState {
         use ic_canister_kit::common::trap;
         let file = trap(self.files.get(&path).ok_or("File not found"));
         let asset = trap(self.assets.get(&file.hash).ok_or("File not found"));
-        asset
-            .slice(&file.hash, file.size, 0, file.size as usize)
-            .to_vec()
+        asset.slice(&file.hash, file.size, 0, file.size as usize).to_vec()
     }
     pub fn download_by(&self, path: String, offset: u64, size: u64) -> Vec<u8> {
         use ic_canister_kit::common::trap;
@@ -361,10 +212,7 @@ impl InnerState {
         // 6. 检查 data
         if arg.index < chunks - 1 || arg.size == arg.chunk_size as u64 * chunks as u64 {
             // 是前面完整的 或者 整好整除
-            assert!(
-                arg.chunk.len() as u32 == arg.chunk_size,
-                "wrong chunk length"
-            );
+            assert!(arg.chunk.len() as u32 == arg.chunk_size, "wrong chunk length");
         } else {
             // 是剩下的
             assert!(
